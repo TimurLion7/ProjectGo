@@ -1,18 +1,33 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
-func HelloHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Hello, World!")
+type requestBody struct {
+	Message string `json:"message"`
+}
+
+var task string
+
+func PostHandler(w http.ResponseWriter, r *http.Request) {
+	var body requestBody
+	json.NewDecoder(r.Body).Decode(&body)
+	task = body.Message
+	fmt.Fprintln(w, "Task updated successfully!")
+}
+
+func GetHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Hello, %s", task)
 }
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/api/hello", HelloHandler).Methods("GET")
+	router.HandleFunc("/api/hello", GetHandler).Methods("GET")
+	router.HandleFunc("/api/hello", PostHandler).Methods("POST")
 	http.ListenAndServe(":8080", router)
 }
