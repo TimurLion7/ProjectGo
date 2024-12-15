@@ -18,7 +18,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	var body requestBody
 	json.NewDecoder(r.Body).Decode(&body)
 	task = body.Message
-	fmt.Fprintln(w, "Task updated successfully!")
+	fmt.Fprintf(w, "Message: %s updated successfully!", task)
 }
 
 func GetHandler(w http.ResponseWriter, r *http.Request) {
