@@ -1,16 +1,16 @@
 package handlers
 
 import (
-	"encoding/json"
+	"context"
 	"myproject/internal/taskService"
-	"net/http"
-
-	"github.com/gorilla/mux"
+	"myproject/internal/web/tasks"
 )
 
 type Handler struct {
 	Service *taskService.TaskService
 }
+
+// DeleteTasksId implements tasks.StrictServerInterface.
 
 func NewHandler(service *taskService.TaskService) *Handler {
 	return &Handler{
@@ -18,62 +18,124 @@ func NewHandler(service *taskService.TaskService) *Handler {
 	}
 }
 
-func (h *Handler) GetTasksHandler(w http.ResponseWriter, r *http.Request) {
-	tasks, err := h.Service.GetAllTasks()
+// GetTasks implements tasks.StrictServerInterface.
+func (h *Handler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (tasks.GetTasksResponseObject, error) {
+	allTasks, err := h.Service.GetAllTasks()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return nil, err
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tasks)
+	response := tasks.GetTasks200JSONResponse{}
+	for _, tsk := range allTasks {
+		task := tasks.Task{
+			Id:     &tsk.ID,
+			Task:   &tsk.Task,
+			IsDone: &tsk.IsDone,
+		}
+		response = append(response, task)
+	}
+	return response, nil
 }
 
-func (h *Handler) PostTaskHandler(w http.ResponseWriter, r *http.Request) {
-	var task taskService.Task
-	err := json.NewDecoder(r.Body).Decode(&task)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+// PostTasks implements tasks.StrictServerInterface.
+func (h *Handler) PostTasks(_ context.Context, request tasks.PostTasksRequestObject) (tasks.PostTasksResponseObject, error) {
+	// Распаковываем тело запроса напрямую, без декодера!
+	taskRequest := request.Body
+	// Обращаемся к сервису и создаем задачу
+	taskToCreate := taskService.Task{
+		Task:   *taskRequest.Task,
+		IsDone: *taskRequest.IsDone,
 	}
 
-	createdTask, err := h.Service.CreateTask(task)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	createdTask, err := h.Service.CreateTask(taskToCreate)
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(createdTask)
+	if err != nil {
+		return nil, err
+	}
+	// создаем структуру респонс
+	response := tasks.PostTasks201JSONResponse{
+		Id:     &createdTask.ID,
+		Task:   &createdTask.Task,
+		IsDone: &createdTask.IsDone,
+	}
+	// Просто возвращаем респонс!
+	return response, nil
 }
 
-func (h *Handler) PatchTaskHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id := params["id"]
-
-	var update map[string]interface{}
-
-	json.NewDecoder(r.Body).Decode(&update)
-
-	updates, err := h.Service.UpdateTaskByID(id, update)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(updates)
-
-}
-
-func (h *Handler) DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id := params["id"]
-
+func (h *Handler) DeleteTasksId(_ context.Context, request tasks.DeleteTasksIdRequestObject) (tasks.DeleteTasksIdResponseObject, error) {
+	id := request.Id
 	err := h.Service.DeleteTaskByID(id)
-
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
+	}
+	response := tasks.DeleteTasksId204Response{}
+	return response, nil
+}
+
+// PatchTasksId implements tasks.StrictServerInterface.
+func (h *Handler) PatchTasksId(_ context.Context, request tasks.PatchTasksIdRequestObject) (tasks.PatchTasksIdResponseObject, error) {
+	id := request.Id
+
+	// Создаем карту обновляемых полей
+	updates := make(map[string]interface{})
+
+	// Проверяем, какие поля были переданы
+	if request.Body.Task != nil {
+		updates["task"] = *request.Body.Task
+	}
+	if request.Body.IsDone != nil {
+		updates["is_done"] = *request.Body.IsDone
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	// Обновляем задачу
+	updatedTask, err := h.Service.UpdateTaskByID(id, updates)
+	if err != nil {
+		return nil, err
+	}
 
+	// Формируем ответ
+	response := tasks.PatchTasksId200JSONResponse{
+		Id:     &updatedTask.ID,
+		Task:   &updatedTask.Task,
+		IsDone: &updatedTask.IsDone,
+	}
+	return response, nil
 }
+
+/*
+func (h *Handler) PatchTasksId(_ context.Context, request tasks.PatchTasksIdRequestObject) (tasks.PatchTasksIdResponseObject, error) {
+	id := request.Id
+
+	// Теперь предполагаем, что request.Body - это структура с полями Task и IsDone
+	update := request.Body // Это структура
+
+	// Создаем объект задачи для обновления
+	updTask := taskService.Task{
+		Task:   *update.Task,   // предполагается, что Task - это указатель
+		IsDone: *update.IsDone, // предполагается, что IsDone - это указатель
+	}
+
+	// Обновляем только переданные поля
+	if update.Task != nil {
+		updTask.Task = *update.Task
+	}
+	if update.IsDone != nil {
+		updTask.IsDone = *update.IsDone
+	}
+
+	// Обращаемся к сервису для обновления задачи по ID
+	updatedTask, err := h.Service.UpdateTaskByID(id, updTask)
+	if err != nil {
+		return nil, err
+	}
+
+	// Формируем ответ
+	response := tasks.PatchTasksId200JSONResponse{
+		Id:     &updatedTask.ID,
+		Task:   &updatedTask.Task,
+		IsDone: &updatedTask.IsDone,
+	}
+	return response, nil
+}
+
+
+}*/

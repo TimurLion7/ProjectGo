@@ -12,9 +12,9 @@ type TaskRepository interface {
 	GetAllTasks() ([]Task, error)
 	// UpdateTaskByID - Передаем id и Task, возвращаем обновленный Task
 	// и ошибку
-	UpdateTaskByID(id string, updates map[string]interface{}) (Task, error)
+	UpdateTaskByID(id int, updates map[string]interface{}) (Task, error)
 	// DeleteTaskByID - Передаем id для удаления, возвращаем только ошибку
-	DeleteTaskByID(id string) error
+	DeleteTaskByID(id int) error
 }
 
 type taskRepository struct {
@@ -36,11 +36,12 @@ func (r *taskRepository) CreateTask(task Task) (Task, error) {
 
 func (r *taskRepository) GetAllTasks() ([]Task, error) {
 	var tasks []Task
-	err := r.db.Find(&tasks).Error
+	//err := r.db.Find(&tasks).Error
+	err := r.db.Order("created_at ASC").Find(&tasks).Error
 	return tasks, err
 }
 
-func (r *taskRepository) UpdateTaskByID(id string, updates map[string]interface{}) (Task, error) {
+func (r *taskRepository) UpdateTaskByID(id int, updates map[string]interface{}) (Task, error) {
 
 	result := r.db.Model(&Task{}).Where("id = ?", id).Updates(updates)
 	if result.Error != nil {
@@ -54,7 +55,7 @@ func (r *taskRepository) UpdateTaskByID(id string, updates map[string]interface{
 	return updatedTask, nil
 }
 
-func (r *taskRepository) DeleteTaskByID(id string) error {
+func (r *taskRepository) DeleteTaskByID(id int) error {
 	var task Task
 	result := r.db.First(&task, id)
 	if result.Error != nil {

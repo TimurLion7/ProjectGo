@@ -16,10 +16,10 @@ func (s *TaskService) GetAllTasks() ([]Task, error) {
 	return s.repo.GetAllTasks()
 }
 
-func (s *TaskService) UpdateTaskByID(id string, updates map[string]interface{}) (Task, error) {
+func (s *TaskService) UpdateTaskByID(id int, updates map[string]interface{}) (Task, error) {
 	return s.repo.UpdateTaskByID(id, updates)
 }
 
-func (s *TaskService) DeleteTaskByID(id string) error {
+func (s *TaskService) DeleteTaskByID(id int) error {
 	return s.repo.DeleteTaskByID(id)
 }

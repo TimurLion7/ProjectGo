@@ -8,3 +8,10 @@ CREATE TABLE tasks (
 );
 
 
+/*INSERT INTO tasks (task, is_done)
+VALUES 
+    ('task1', true),
+    ('task2', true),
+    ('task3', true),
+    ('task4', true),
+    ('task5', true)*/
