@@ -114,14 +114,6 @@ func (h *Handler) PatchTasksId(_ context.Context, request tasks.PatchTasksIdRequ
 		IsDone: *update.IsDone, // предполагается, что IsDone - это указатель
 	}
 
-	// Обновляем только переданные поля
-	if update.Task != nil {
-		updTask.Task = *update.Task
-	}
-	if update.IsDone != nil {
-		updTask.IsDone = *update.IsDone
-	}
-
 	// Обращаемся к сервису для обновления задачи по ID
 	updatedTask, err := h.Service.UpdateTaskByID(id, updTask)
 	if err != nil {
