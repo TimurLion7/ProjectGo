@@ -6,21 +6,21 @@ import (
 	"myproject/internal/web/tasks"
 )
 
-type Handler struct {
+type TasksHandler struct {
 	Service *taskService.TaskService
 }
 
 // DeleteTasksId implements tasks.StrictServerInterface.
 
-func NewHandler(service *taskService.TaskService) *Handler {
-	return &Handler{
+func NewTaskHandler(service *taskService.TaskService) *TasksHandler {
+	return &TasksHandler{
 		Service: service,
 	}
 }
 
 // GetTasks implements tasks.StrictServerInterface.
-func (h *Handler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (tasks.GetTasksResponseObject, error) {
-	allTasks, err := h.Service.GetAllTasks()
+func (t *TasksHandler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (tasks.GetTasksResponseObject, error) {
+	allTasks, err := t.Service.GetAllTasks()
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (h *Handler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (ta
 }
 
 // PostTasks implements tasks.StrictServerInterface.
-func (h *Handler) PostTasks(_ context.Context, request tasks.PostTasksRequestObject) (tasks.PostTasksResponseObject, error) {
+func (t *TasksHandler) PostTasks(_ context.Context, request tasks.PostTasksRequestObject) (tasks.PostTasksResponseObject, error) {
 	// Распаковываем тело запроса напрямую, без декодера!
 	taskRequest := request.Body
 	// Обращаемся к сервису и создаем задачу
@@ -46,7 +46,7 @@ func (h *Handler) PostTasks(_ context.Context, request tasks.PostTasksRequestObj
 		IsDone: *taskRequest.IsDone,
 	}
 
-	createdTask, err := h.Service.CreateTask(taskToCreate)
+	createdTask, err := t.Service.CreateTask(taskToCreate)
 
 	if err != nil {
 		return nil, err
@@ -61,9 +61,9 @@ func (h *Handler) PostTasks(_ context.Context, request tasks.PostTasksRequestObj
 	return response, nil
 }
 
-func (h *Handler) DeleteTasksId(_ context.Context, request tasks.DeleteTasksIdRequestObject) (tasks.DeleteTasksIdResponseObject, error) {
+func (t *TasksHandler) DeleteTasksId(_ context.Context, request tasks.DeleteTasksIdRequestObject) (tasks.DeleteTasksIdResponseObject, error) {
 	id := request.Id
-	err := h.Service.DeleteTaskByID(id)
+	err := t.Service.DeleteTaskByID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (h *Handler) DeleteTasksId(_ context.Context, request tasks.DeleteTasksIdRe
 }
 
 // PatchTasksId implements tasks.StrictServerInterface.
-func (h *Handler) PatchTasksId(_ context.Context, request tasks.PatchTasksIdRequestObject) (tasks.PatchTasksIdResponseObject, error) {
+func (t *TasksHandler) PatchTasksId(_ context.Context, request tasks.PatchTasksIdRequestObject) (tasks.PatchTasksIdResponseObject, error) {
 	id := request.Id
 
 	// Создаем карту обновляемых полей
@@ -87,7 +87,7 @@ func (h *Handler) PatchTasksId(_ context.Context, request tasks.PatchTasksIdRequ
 	}
 
 	// Обновляем задачу
-	updatedTask, err := h.Service.UpdateTaskByID(id, updates)
+	updatedTask, err := t.Service.UpdateTaskByID(id, updates)
 	if err != nil {
 		return nil, err
 	}

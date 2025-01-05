@@ -1,0 +1,8 @@
+create table users (
+    ID SERIAL PRIMARY KEY,
+    Email VARCHAR(150) NOT NULL,
+    Password VARCHAR(255) NOT NULL,
+    Deleted_at TIMESTAMP DEFAULT NULL,
+    Created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    Updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
