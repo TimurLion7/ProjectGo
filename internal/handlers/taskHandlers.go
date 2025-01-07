@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"myproject/internal/models"
 	"myproject/internal/taskService"
 	"myproject/internal/web/tasks"
 )
@@ -41,7 +42,7 @@ func (t *TasksHandler) PostTasks(_ context.Context, request tasks.PostTasksReque
 	// Распаковываем тело запроса напрямую, без декодера!
 	taskRequest := request.Body
 	// Обращаемся к сервису и создаем задачу
-	taskToCreate := taskService.Task{
+	taskToCreate := models.Task{
 		Task:   *taskRequest.Task,
 		IsDone: *taskRequest.IsDone,
 	}

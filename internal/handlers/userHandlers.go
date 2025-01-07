@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"myproject/internal/models"
 	"myproject/internal/userService"
 	"myproject/internal/web/users"
 )
@@ -79,7 +80,7 @@ func (u *UserHandler) PostUsers(_ context.Context, request users.PostUsersReques
 	// Распаковываем тело запроса напрямую, без декодера!
 	userRequest := request.Body
 	// Обращаемся к сервису и создаем пользователя
-	userToCreate := userService.User{
+	userToCreate := models.User{
 		Email:    *userRequest.Email,
 		Password: *userRequest.Password,
 	}
