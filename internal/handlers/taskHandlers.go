@@ -11,6 +11,29 @@ type TasksHandler struct {
 	Service *taskService.TaskService
 }
 
+// GetTasksUserUserId implements tasks.StrictServerInterface.
+func (t *TasksHandler) GetTasksUserUserId(ctx context.Context, request tasks.GetTasksUserUserIdRequestObject) (tasks.GetTasksUserUserIdResponseObject, error) {
+	userID := request.UserId // Предполагаем, что в запросе передается user_id
+	tasks, err := t.Service.GetTasksForUser(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Преобразуем задачи в формат, ожидаемый API
+	var response tasks.GetTasksForUserResponseObject
+	for _, tsk := range tasks {
+		task := tasks.Task{
+			Id:     &tsk.ID,
+			Task:   &tsk.Task,
+			IsDone: &tsk.IsDone,
+			UserId: &tsk.UserID,
+		}
+		response = append(response, task)
+	}
+
+	return response, nil
+}
+
 // DeleteTasksId implements tasks.StrictServerInterface.
 
 func NewTaskHandler(service *taskService.TaskService) *TasksHandler {
