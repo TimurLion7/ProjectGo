@@ -11,6 +11,12 @@ type UserHandler struct {
 	Service *userService.UserService
 }
 
+func NewUserHandler(service *userService.UserService) *UserHandler {
+	return &UserHandler{
+		Service: service,
+	}
+}
+
 // GetUsersUserIdTask implements users.StrictServerInterface.
 func (u *UserHandler) GetUsersUserIdTask(_ context.Context, request users.GetUsersUserIdTaskRequestObject) (users.GetUsersUserIdTaskResponseObject, error) {
 	userID := request.UserId // Предполагаем, что в запросе передается user_id
@@ -26,17 +32,10 @@ func (u *UserHandler) GetUsersUserIdTask(_ context.Context, request users.GetUse
 			Id:     &tsk.ID,
 			Task:   &tsk.Task,
 			IsDone: &tsk.IsDone,
-			UserId: &tsk.UserID,
 		}
 		response = append(response, task)
 	}
 	return response, nil
-}
-
-func NewUserHandler(service *userService.UserService) *UserHandler {
-	return &UserHandler{
-		Service: service,
-	}
 }
 
 // DeleteUsersId implements users.StrictServerInterface.
