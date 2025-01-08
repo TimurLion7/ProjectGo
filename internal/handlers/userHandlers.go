@@ -11,6 +11,28 @@ type UserHandler struct {
 	Service *userService.UserService
 }
 
+// GetUsersUserIdTask implements users.StrictServerInterface.
+func (u *UserHandler) GetUsersUserIdTask(_ context.Context, request users.GetUsersUserIdTaskRequestObject) (users.GetUsersUserIdTaskResponseObject, error) {
+	userID := request.UserId // Предполагаем, что в запросе передается user_id
+	tasks, err := u.Service.GetTasksForUser(uint(userID))
+	if err != nil {
+		return nil, err
+	}
+
+	// Преобразуем задачи в формат, ожидаемый API
+	response := users.GetUsersUserIdTask200JSONResponse{}
+	for _, tsk := range tasks {
+		task := users.Task{
+			Id:     &tsk.ID,
+			Task:   &tsk.Task,
+			IsDone: &tsk.IsDone,
+			UserId: &tsk.UserID,
+		}
+		response = append(response, task)
+	}
+	return response, nil
+}
+
 func NewUserHandler(service *userService.UserService) *UserHandler {
 	return &UserHandler{
 		Service: service,

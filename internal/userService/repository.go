@@ -1,6 +1,7 @@
 package userService
 
 import (
+	"fmt"
 	"myproject/internal/models"
 
 	"gorm.io/gorm"
@@ -23,6 +24,13 @@ func NewUserRepository(db *gorm.DB) *userRepository {
 }
 
 func (r *userRepository) GetTasksForUser(userID uint) ([]models.Task, error) {
+
+	var user models.User
+	// Проверка, существует ли пользователь с данным ID
+	if err := r.db.First(&user, userID).Error; err != nil {
+		return nil, fmt.Errorf("user not found: %v", err)
+	}
+
 	var tasks []models.Task
 	err := r.db.Where("user_id = ?", userID).Find(&tasks).Error
 	if err != nil {
@@ -62,14 +70,12 @@ func (r *userRepository) PatchUserByID(id int, patchs map[string]interface{}) (m
 }
 
 func (r *userRepository) DeleteUserByID(id int) error {
-	var user models.User
-	res := r.db.First(&user, id)
-	if res.Error != nil {
-		return res.Error // Вернуть ошибку, если задача не найдена
-	}
-	DeleteRes := r.db.Delete(&user)
+
+	// Физически удаляем пользователя
+	DeleteRes := r.db.Unscoped().Where("id = ?", id).Delete(&models.User{})
 	if DeleteRes.Error != nil {
-		return DeleteRes.Error
+		return DeleteRes.Error // Ошибка удаления
 	}
+
 	return nil
 }

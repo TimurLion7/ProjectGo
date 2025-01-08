@@ -1,6 +1,8 @@
 package taskService
 
 import (
+	"fmt"
+	"log"
 	"myproject/internal/models"
 
 	"gorm.io/gorm"
@@ -29,15 +31,17 @@ func NewTaskRepository(db *gorm.DB) *taskRepository {
 
 // (r *taskRepository) привязывает данную функцию к нашему репозиторию
 func (r *taskRepository) CreateTask(task models.Task) (models.Task, error) {
-	// Проверка, что user_id существует
-	var user []models.User
+	// Проверяем, существует ли пользователь с заданным ID
+	var user models.User
 	if err := r.db.First(&user, task.UserID).Error; err != nil {
-		return models.Task{}, err
+		log.Printf("Error finding user with id %d: %v", task.UserID, err)
+		return models.Task{}, fmt.Errorf("user with id %d not found", task.UserID)
 	}
-	// Создание задачи
-	result := r.db.Create(&task)
-	if result.Error != nil {
-		return models.Task{}, result.Error
+
+	// Создаем задачу
+	if err := r.db.Create(&task).Error; err != nil {
+		log.Printf("Error creating task: %v", err)
+		return models.Task{}, err
 	}
 	return task, nil
 }

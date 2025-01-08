@@ -11,31 +11,6 @@ type TasksHandler struct {
 	Service *taskService.TaskService
 }
 
-// GetTasksUserUserId implements tasks.StrictServerInterface.
-func (t *TasksHandler) GetTasksUserUserId(ctx context.Context, request tasks.GetTasksUserUserIdRequestObject) (tasks.GetTasksUserUserIdResponseObject, error) {
-	userID := request.UserId // Предполагаем, что в запросе передается user_id
-	tasks, err := t.Service.GetTasksForUser(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Преобразуем задачи в формат, ожидаемый API
-	var response tasks.GetTasksForUserResponseObject
-	for _, tsk := range tasks {
-		task := tasks.Task{
-			Id:     &tsk.ID,
-			Task:   &tsk.Task,
-			IsDone: &tsk.IsDone,
-			UserId: &tsk.UserID,
-		}
-		response = append(response, task)
-	}
-
-	return response, nil
-}
-
-// DeleteTasksId implements tasks.StrictServerInterface.
-
 func NewTaskHandler(service *taskService.TaskService) *TasksHandler {
 	return &TasksHandler{
 		Service: service,
@@ -54,6 +29,7 @@ func (t *TasksHandler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject
 			Id:     &tsk.ID,
 			Task:   &tsk.Task,
 			IsDone: &tsk.IsDone,
+			UserId: &tsk.UserID,
 		}
 		response = append(response, task)
 	}
@@ -68,6 +44,7 @@ func (t *TasksHandler) PostTasks(_ context.Context, request tasks.PostTasksReque
 	taskToCreate := models.Task{
 		Task:   *taskRequest.Task,
 		IsDone: *taskRequest.IsDone,
+		UserID: *taskRequest.UserId,
 	}
 
 	createdTask, err := t.Service.CreateTask(taskToCreate)
@@ -80,6 +57,7 @@ func (t *TasksHandler) PostTasks(_ context.Context, request tasks.PostTasksReque
 		Id:     &createdTask.ID,
 		Task:   &createdTask.Task,
 		IsDone: &createdTask.IsDone,
+		UserId: &createdTask.UserID,
 	}
 	// Просто возвращаем респонс!
 	return response, nil
@@ -110,6 +88,10 @@ func (t *TasksHandler) PatchTasksId(_ context.Context, request tasks.PatchTasksI
 		updates["is_done"] = *request.Body.IsDone
 	}
 
+	if request.Body.UserId != nil {
+		updates["user_id"] = *request.Body.UserId
+	}
+
 	// Обновляем задачу
 	updatedTask, err := t.Service.UpdateTaskByID(id, updates)
 	if err != nil {
@@ -121,6 +103,7 @@ func (t *TasksHandler) PatchTasksId(_ context.Context, request tasks.PatchTasksI
 		Id:     &updatedTask.ID,
 		Task:   &updatedTask.Task,
 		IsDone: &updatedTask.IsDone,
+		UserId: &updatedTask.UserID,
 	}
 	return response, nil
 }
